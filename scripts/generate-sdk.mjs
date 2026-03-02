@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import prettier from 'prettier';
 
 const root = '/Users/varunnaik/Documents/New project';
 const specPath = path.join(root, 'docs/openapi.json');
@@ -176,6 +177,12 @@ export class SkyFlowApiClient {
 }
 `;
 
+const prettierConfig = (await prettier.resolveConfig(outPath)) ?? {};
+const formattedContent = await prettier.format(content, {
+  ...prettierConfig,
+  filepath: outPath
+});
+
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
-fs.writeFileSync(outPath, content, 'utf8');
+fs.writeFileSync(outPath, formattedContent, 'utf8');
 console.log(`Generated SDK client from ${spec.info.title} v${spec.info.version} -> ${outPath}`);
