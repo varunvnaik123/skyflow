@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import prettier from 'prettier';
+import { fileURLToPath } from 'node:url';
 
-const root = '/Users/varunnaik/Documents/New project';
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(scriptDir, '..');
 const specPath = path.join(root, 'docs/openapi.json');
 const outPath = path.join(root, 'packages/sdk/src/generated/client.ts');
 
