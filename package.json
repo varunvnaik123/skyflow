@@ -1,0 +1,48 @@
+{
+  "name": "skyflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SkyFlow - distributed event-driven airport landing slot allocation system",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "infra"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @skyflow/shared && npm run build --workspace @skyflow/domain && npm run build --workspace @skyflow/application && npm run build --workspace @skyflow/aws-adapters && npm run build --workspace @skyflow/sdk && npm run build --workspace @skyflow/allocator-worker && npm run build --workspace @skyflow/api && npm run build --workspace @skyflow/infra",
+    "clean": "npm run clean --workspaces --if-present",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run build && npm run test:workspaces",
+    "test:workspaces": "npm run test --workspaces",
+    "test:unit": "npm run test:unit --workspace @skyflow/domain",
+    "test:integration": "npm run test:integration --workspace @skyflow/api",
+    "test:e2e": "npm run test:e2e --workspace @skyflow/allocator-worker",
+    "sdk:generate": "node scripts/generate-sdk.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "cdk:synth": "npm run cdk:synth --workspace @skyflow/infra",
+    "cdk:deploy": "npm run cdk:deploy --workspace @skyflow/infra",
+    "localstack:start": "./scripts/localstack/start.sh",
+    "localstack:stop": "./scripts/localstack/stop.sh",
+    "localstack:bootstrap": "./scripts/localstack/bootstrap.sh",
+    "local:e2e": "./scripts/localstack/run-e2e.sh",
+    "doctor": "./scripts/doctor.sh"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.23.0",
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.13.13",
+    "@typescript-eslint/eslint-plugin": "^8.26.1",
+    "@typescript-eslint/parser": "^8.26.1",
+    "eslint": "^9.23.0",
+    "eslint-config-prettier": "^10.0.2",
+    "prettier": "^3.5.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1",
+    "vitest": "^3.0.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

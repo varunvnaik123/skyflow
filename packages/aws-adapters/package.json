@@ -1,0 +1,25 @@
+{
+  "name": "@skyflow/aws-adapters",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "lint": "eslint src",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.750.0",
+    "@aws-sdk/client-eventbridge": "^3.750.0",
+    "@aws-sdk/client-sqs": "^3.750.0",
+    "@aws-sdk/lib-dynamodb": "^3.750.0",
+    "@skyflow/application": "0.1.0",
+    "@skyflow/domain": "0.1.0",
+    "@skyflow/shared": "0.1.0"
+  }
+}

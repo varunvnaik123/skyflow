@@ -1,0 +1,20 @@
+{
+  "name": "@skyflow/application",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "lint": "eslint src test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@skyflow/domain": "0.1.0",
+    "@skyflow/shared": "0.1.0"
+  }
+}

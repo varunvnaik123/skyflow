@@ -1,0 +1,14 @@
+services:
+  localstack:
+    image: localstack/localstack:3.8
+    ports:
+      - '4566:4566'
+    environment:
+      - SERVICES=lambda,dynamodb,sqs,events,iam,logs,cloudwatch
+      - DEBUG=1
+      - PERSISTENCE=0
+      - LAMBDA_EXECUTOR=docker-reuse
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - './.localstack:/var/lib/localstack'
+      - '/var/run/docker.sock:/var/run/docker.sock'

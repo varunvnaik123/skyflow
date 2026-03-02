@@ -1,0 +1,10 @@
+node_modules
+cdk.out
+dist
+coverage
+*.log
+.env
+.DS_Store
+.localstack
+.npm-cache
+scripts/localstack/.env.localstack

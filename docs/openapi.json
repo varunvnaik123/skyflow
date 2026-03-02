@@ -1,0 +1,336 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SkyFlow API",
+    "version": "1.0.0",
+    "description": "HTTP API for SkyFlow landing slot allocation"
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/v1"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/flights/requests": {
+      "post": {
+        "operationId": "submitFlightRequest",
+        "summary": "Submit flight slot request",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SubmitFlightRequest" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/QueuedResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/flights/{flightId}/delay": {
+      "post": {
+        "operationId": "submitDelayUpdate",
+        "summary": "Submit delay update",
+        "parameters": [
+          {
+            "name": "flightId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DelayUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/QueuedResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/flights/{flightId}": {
+      "get": {
+        "operationId": "getFlightStatus",
+        "summary": "Get flight status",
+        "parameters": [
+          {
+            "name": "flightId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "airport_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flight status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FlightStatusResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/capacity": {
+      "put": {
+        "operationId": "updateCapacity",
+        "summary": "Update runway capacity config",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CapacityUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CapacityUpdateResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/congestion": {
+      "get": {
+        "operationId": "getCongestionMetrics",
+        "summary": "Get congestion metrics",
+        "parameters": [
+          {
+            "name": "airport_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Congestion metrics",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CongestionMetricsResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "SubmitFlightRequest": {
+        "type": "object",
+        "required": [
+          "airport_id",
+          "flight_id",
+          "airline_id",
+          "scheduled_arrival_time",
+          "aircraft_type",
+          "priority"
+        ],
+        "properties": {
+          "airport_id": { "type": "string" },
+          "flight_id": { "type": "string" },
+          "airline_id": { "type": "string" },
+          "scheduled_arrival_time": { "type": "string", "format": "date-time" },
+          "aircraft_type": { "type": "string" },
+          "priority": {
+            "type": "string",
+            "enum": ["NORMAL", "INTERNATIONAL", "EMERGENCY"]
+          },
+          "constraints": {
+            "type": "object",
+            "properties": {
+              "maxDelayMinutes": { "type": "integer" },
+              "preferredRunwayId": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "DelayUpdateRequest": {
+        "type": "object",
+        "required": ["airport_id", "new_arrival_time", "delay_reason"],
+        "properties": {
+          "airport_id": { "type": "string" },
+          "new_arrival_time": { "type": "string", "format": "date-time" },
+          "delay_reason": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "CapacityUpdateRequest": {
+        "type": "object",
+        "required": [
+          "airport_id",
+          "runway_count",
+          "slot_minutes",
+          "lookahead_minutes",
+          "holding_lookahead_minutes",
+          "max_consecutive_per_airline",
+          "freeze_window_minutes"
+        ],
+        "properties": {
+          "airport_id": { "type": "string" },
+          "runway_count": { "type": "integer" },
+          "slot_minutes": { "type": "integer" },
+          "lookahead_minutes": { "type": "integer" },
+          "holding_lookahead_minutes": { "type": "integer" },
+          "max_consecutive_per_airline": { "type": "integer" },
+          "freeze_window_minutes": { "type": "integer" }
+        },
+        "additionalProperties": false
+      },
+      "QueuedResponse": {
+        "type": "object",
+        "required": ["requestId", "status"],
+        "properties": {
+          "requestId": { "type": "string" },
+          "status": { "type": "string", "enum": ["QUEUED"] }
+        },
+        "additionalProperties": false
+      },
+      "FlightStatusResponse": {
+        "type": "object",
+        "required": [
+          "flight_id",
+          "airline_id",
+          "airport_id",
+          "status",
+          "scheduled_arrival_time",
+          "priority",
+          "last_updated_at"
+        ],
+        "properties": {
+          "flight_id": { "type": "string" },
+          "airline_id": { "type": "string" },
+          "airport_id": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["REQUESTED", "ASSIGNED", "HOLDING", "DELAYED", "FAILED", "CANCELLED"]
+          },
+          "scheduled_arrival_time": { "type": "string", "format": "date-time" },
+          "priority": {
+            "type": "string",
+            "enum": ["NORMAL", "INTERNATIONAL", "EMERGENCY"]
+          },
+          "last_updated_at": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      },
+      "CapacityUpdateResponse": {
+        "type": "object",
+        "required": ["status", "updated_at"],
+        "properties": {
+          "status": { "type": "string", "enum": ["UPDATED"] },
+          "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      },
+      "CongestionMetricsResponse": {
+        "type": "object",
+        "required": [
+          "airport_id",
+          "assigned_slots",
+          "runway_count",
+          "slot_minutes",
+          "congestion_index"
+        ],
+        "properties": {
+          "airport_id": { "type": "string" },
+          "assigned_slots": { "type": "integer" },
+          "runway_count": { "type": "integer" },
+          "slot_minutes": { "type": "integer" },
+          "congestion_index": { "type": "number" }
+        },
+        "additionalProperties": false
+      },
+      "ApiError": {
+        "type": "object",
+        "required": ["errorCode", "message", "correlationId"],
+        "properties": {
+          "errorCode": { "type": "string" },
+          "message": { "type": "string" },
+          "correlationId": { "type": "string" },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}
