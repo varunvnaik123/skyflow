@@ -10,7 +10,12 @@ export interface LogContext {
 export class Logger {
   constructor(private readonly serviceName: string) {}
 
-  log(level: LogLevel, message: string, context: LogContext, extra?: Record<string, unknown>): void {
+  log(
+    level: LogLevel,
+    message: string,
+    context: LogContext,
+    extra?: Record<string, unknown>
+  ): void {
     const payload = {
       timestamp: new Date().toISOString(),
       level,

@@ -62,7 +62,9 @@ function compareCandidates(a: AllocationCandidate, b: AllocationCandidate): numb
     return priorityDiff;
   }
 
-  const arrivalDiff = parseIso(a.flight.scheduledArrivalTime).getTime() - parseIso(b.flight.scheduledArrivalTime).getTime();
+  const arrivalDiff =
+    parseIso(a.flight.scheduledArrivalTime).getTime() -
+    parseIso(b.flight.scheduledArrivalTime).getTime();
   if (arrivalDiff !== 0) {
     return arrivalDiff;
   }
@@ -86,7 +88,9 @@ function fairnessConstrained(
   }
 
   const tail = sequence.slice(-capacity.maxConsecutivePerAirline);
-  const atLimit = tail.length === capacity.maxConsecutivePerAirline && tail.every((airline) => airline === candidate.flight.airlineId);
+  const atLimit =
+    tail.length === capacity.maxConsecutivePerAirline &&
+    tail.every((airline) => airline === candidate.flight.airlineId);
 
   return atLimit && samePriorityAlternativesExist;
 }
@@ -229,7 +233,13 @@ export function rebalanceSlots(input: RebalanceInput): AllocationOutcome {
     .sort((a, b) => parseIso(a.slotStartTime).getTime() - parseIso(b.slotStartTime).getTime())
     .map((item) => item.airlineId);
 
-  const result = allocateWithCapacity(slots, mutable, input.capacity, sortedLockedAirlineSequence, 2);
+  const result = allocateWithCapacity(
+    slots,
+    mutable,
+    input.capacity,
+    sortedLockedAirlineSequence,
+    2
+  );
   const assignedByFlight = new Map<string, SlotAllocation>();
   for (const allocation of locked) {
     assignedByFlight.set(allocation.flightId, allocation);

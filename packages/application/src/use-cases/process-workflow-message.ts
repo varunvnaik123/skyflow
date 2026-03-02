@@ -34,7 +34,9 @@ function toCandidate(
 ): AllocationCandidate[] {
   return flights.map((flight) => ({
     flight,
-    existingAllocation: existingAllocations.find((allocation) => allocation.flightId === flight.flightId)
+    existingAllocation: existingAllocations.find(
+      (allocation) => allocation.flightId === flight.flightId
+    )
   }));
 }
 
@@ -164,7 +166,12 @@ export async function processWorkflowMessage(
     now
   );
 
-  await publishAssignmentEvents(dependencies.events, message, outcome.assigned, existingAllocations);
+  await publishAssignmentEvents(
+    dependencies.events,
+    message,
+    outcome.assigned,
+    existingAllocations
+  );
   await publishHoldingEvents(dependencies.events, message, outcome.holding);
 
   return {

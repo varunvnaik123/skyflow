@@ -37,6 +37,7 @@ export async function getCongestionMetrics(
     assignedSlots: allocations.length,
     runwayCount: capacity.runwayCount,
     slotMinutes: capacity.slotMinutes,
-    congestionIndex: slotsPerWindow === 0 ? 0 : Number((allocations.length / slotsPerWindow).toFixed(2))
+    congestionIndex:
+      slotsPerWindow === 0 ? 0 : Number((allocations.length / slotsPerWindow).toFixed(2))
   };
 }

@@ -3,9 +3,11 @@
 ## Observability
 
 Logs:
+
 - All Lambdas emit structured JSON with `correlationId`, `eventId/requestId`, and operation context.
 
 Metrics:
+
 - `slot_assignment_latency`
 - `rebalance_count`
 - `holding_queue_depth`
@@ -14,6 +16,7 @@ Metrics:
 - `delay_updates_received`
 
 Alarm:
+
 - `WorkflowDlqAlarm` triggers when `ApproximateNumberOfMessagesVisible >= 1` on the DLQ.
 
 ## Local Verification
@@ -25,6 +28,7 @@ npm run local:e2e
 ```
 
 This validates:
+
 - resource bootstrap
 - idempotent request intake
 - queue-driven allocation processing

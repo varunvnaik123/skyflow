@@ -36,7 +36,9 @@ export function getAuthContext(event: APIGatewayProxyEventV2): AuthContext {
 
   const groups = parseGroups(claims);
   const role =
-    claims['custom:role'] === 'ADMIN' || groups.includes('admin') ? ('ADMIN' as const) : ('AIRLINE' as const);
+    claims['custom:role'] === 'ADMIN' || groups.includes('admin')
+      ? ('ADMIN' as const)
+      : ('AIRLINE' as const);
 
   const subject = claims.sub;
   if (!subject) {

@@ -1,4 +1,4 @@
-import type { SQSHandler } from 'aws-lambda';
+import type { SQSBatchItemFailure, SQSBatchResponse, SQSEvent } from 'aws-lambda';
 
 import { processWorkflowMessage, type WorkflowMessage } from '@skyflow/application';
 import type { DomainEventEnvelope } from '@skyflow/domain';
@@ -7,14 +7,19 @@ import { emitMetrics } from '@skyflow/shared';
 import type { WorkerDependencies } from './dependencies.js';
 import { createWorkerDependencies } from './dependencies.js';
 
-export function createWorkerHandler(deps: WorkerDependencies): SQSHandler {
-  return async (event) => {
+export function createWorkerHandler(
+  deps: WorkerDependencies
+): (event: SQSEvent) => Promise<SQSBatchResponse> {
+  return async (event: SQSEvent): Promise<SQSBatchResponse> => {
+    const batchItemFailures: SQSBatchItemFailure[] = [];
+
     for (const record of event.Records) {
       const now = new Date().toISOString();
-      const message = JSON.parse(record.body) as WorkflowMessage;
-      const start = Date.now();
+      let message: WorkflowMessage | undefined;
 
       try {
+        message = JSON.parse(record.body) as WorkflowMessage;
+        const start = Date.now();
         const outcome = await processWorkflowMessage(message, now, deps);
         const latency = Date.now() - start;
 
@@ -44,48 +49,65 @@ export function createWorkerHandler(deps: WorkerDependencies): SQSHandler {
           );
         }
 
-        deps.logger.info('Workflow message processed', {
-          correlationId: message.correlationId,
-          eventId: message.eventId
-        }, {
-          assignedCount: outcome.assignedCount,
-          holdingCount: outcome.holdingCount
-        });
-      } catch (error) {
-        const failedEvent: DomainEventEnvelope<'skyflow.flight.failed.v1', Record<string, string>> = {
-          eventId: `${message.eventId}#failed`,
-          correlationId: message.correlationId,
-          causationId: message.eventId,
-          eventType: 'skyflow.flight.failed.v1',
-          eventVersion: '1.0.0',
-          eventTime: new Date().toISOString(),
-          detail: {
-            airportId: message.airportId,
-            flightId: message.flightId,
-            reason: 'Workflow processing failed; message will retry or move to DLQ'
+        deps.logger.info(
+          'Workflow message processed',
+          {
+            correlationId: message.correlationId,
+            eventId: message.eventId
+          },
+          {
+            assignedCount: outcome.assignedCount,
+            holdingCount: outcome.holdingCount
           }
-        };
+        );
+      } catch (error) {
+        if (message) {
+          const failedEvent: DomainEventEnvelope<
+            'skyflow.flight.failed.v1',
+            Record<string, string>
+          > = {
+            eventId: `${message.eventId}#failed`,
+            correlationId: message.correlationId,
+            causationId: message.eventId,
+            eventType: 'skyflow.flight.failed.v1',
+            eventVersion: '1.0.0',
+            eventTime: new Date().toISOString(),
+            detail: {
+              airportId: message.airportId,
+              flightId: message.flightId,
+              reason: 'Workflow processing failed; message will retry or move to DLQ'
+            }
+          };
 
-        try {
-          await deps.events.publish(failedEvent);
-        } catch {
-          // Preserve primary failure path; DLQ remains authoritative fallback.
+          try {
+            await deps.events.publish(failedEvent);
+          } catch {
+            // Preserve primary failure path; DLQ remains authoritative fallback.
+          }
         }
 
         deps.logger.error(
           'Workflow message failed',
           {
-            correlationId: message.correlationId,
-            eventId: message.eventId
+            correlationId: message?.correlationId ?? 'unknown',
+            eventId: message?.eventId ?? record.messageId
           },
           { error }
         );
 
-        // Throw to trigger SQS redrive policy and DLQ routing.
-        throw error;
+        batchItemFailures.push({ itemIdentifier: record.messageId });
       }
     }
+
+    return { batchItemFailures };
   };
 }
 
-export const handler = createWorkerHandler(createWorkerDependencies());
+let defaultHandler: ReturnType<typeof createWorkerHandler> | undefined;
+export const handler = async (event: SQSEvent): Promise<SQSBatchResponse> => {
+  if (!defaultHandler) {
+    defaultHandler = createWorkerHandler(createWorkerDependencies());
+  }
+
+  return defaultHandler(event);
+};

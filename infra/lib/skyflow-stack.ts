@@ -2,12 +2,7 @@ import { Duration, RemovalPolicy, Stack, CfnOutput } from 'aws-cdk-lib';
 import { Runtime, Tracing } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
-import {
-  AttributeType,
-  BillingMode,
-  ProjectionType,
-  Table
-} from 'aws-cdk-lib/aws-dynamodb';
+import { AttributeType, BillingMode, ProjectionType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
 import { HttpApi, HttpMethod, CorsHttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
@@ -23,11 +18,23 @@ export class SkyFlowStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
+    const stage = (this.node.tryGetContext('stage') as string | undefined) ?? 'dev';
+    const dataRemovalPolicy = stage === 'prod' ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY;
+    const allowedOriginsContext = this.node.tryGetContext('allowedOrigins') as string | undefined;
+    const parsedAllowedOrigins = allowedOriginsContext
+      ?.split(',')
+      .map((origin) => origin.trim())
+      .filter((origin) => origin.length > 0);
+    const allowOrigins =
+      parsedAllowedOrigins && parsedAllowedOrigins.length > 0
+        ? parsedAllowedOrigins
+        : ['http://localhost:3000'];
+
     const flightsTable = new Table(this, 'FlightsTable', {
       billingMode: BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: 'PK', type: AttributeType.STRING },
       sortKey: { name: 'SK', type: AttributeType.STRING },
-      removalPolicy: RemovalPolicy.DESTROY
+      removalPolicy: dataRemovalPolicy
     });
     flightsTable.addGlobalSecondaryIndex({
       indexName: 'GSI1',
@@ -40,7 +47,7 @@ export class SkyFlowStack extends Stack {
       billingMode: BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: 'PK', type: AttributeType.STRING },
       sortKey: { name: 'SK', type: AttributeType.STRING },
-      removalPolicy: RemovalPolicy.DESTROY
+      removalPolicy: dataRemovalPolicy
     });
     slotsTable.addGlobalSecondaryIndex({
       indexName: 'GSI1',
@@ -54,21 +61,21 @@ export class SkyFlowStack extends Stack {
       partitionKey: { name: 'PK', type: AttributeType.STRING },
       sortKey: { name: 'SK', type: AttributeType.STRING },
       timeToLiveAttribute: 'ttl',
-      removalPolicy: RemovalPolicy.DESTROY
+      removalPolicy: dataRemovalPolicy
     });
 
     const dedupeTable = new Table(this, 'DedupeTable', {
       billingMode: BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: 'PK', type: AttributeType.STRING },
       timeToLiveAttribute: 'ttl',
-      removalPolicy: RemovalPolicy.DESTROY
+      removalPolicy: dataRemovalPolicy
     });
 
     const capacityTable = new Table(this, 'CapacityTable', {
       billingMode: BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: 'PK', type: AttributeType.STRING },
       sortKey: { name: 'SK', type: AttributeType.STRING },
-      removalPolicy: RemovalPolicy.DESTROY
+      removalPolicy: dataRemovalPolicy
     });
 
     const workflowDlq = new Queue(this, 'WorkflowDLQ', {
@@ -187,7 +194,7 @@ export class SkyFlowStack extends Stack {
           CorsHttpMethod.PUT,
           CorsHttpMethod.OPTIONS
         ],
-        allowOrigins: ['*']
+        allowOrigins
       }
     });
 
@@ -385,6 +392,10 @@ export class SkyFlowStack extends Stack {
 
     new CfnOutput(this, 'UserPoolClientId', {
       value: userPoolClient.userPoolClientId
+    });
+
+    new CfnOutput(this, 'Stage', {
+      value: stage
     });
   }
 }

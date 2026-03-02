@@ -59,6 +59,8 @@ describe('e2e workflow', () => {
     });
 
     expect(outcome.assignedCount).toBe(1);
-    expect(events.events.some((event) => event.eventType === 'skyflow.slot.assigned.v1')).toBe(true);
+    expect(events.events.some((event) => event.eventType === 'skyflow.slot.assigned.v1')).toBe(
+      true
+    );
   });
 });

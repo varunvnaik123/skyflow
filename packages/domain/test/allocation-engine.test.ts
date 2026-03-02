@@ -196,7 +196,9 @@ describe('rebalanceSlots', () => {
       capacity: BASE_CAPACITY
     });
 
-    const byFlight = new Map(outcome.assigned.map((allocation) => [allocation.flightId, allocation]));
+    const byFlight = new Map(
+      outcome.assigned.map((allocation) => [allocation.flightId, allocation])
+    );
     expect(byFlight.size).toBe(outcome.assigned.length);
     expect(byFlight.has('F-LOCKED')).toBe(true);
     expect(byFlight.has('F-OTHER')).toBe(true);

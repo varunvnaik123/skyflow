@@ -85,7 +85,12 @@ describe('POST /v1/flights/requests', () => {
       priority: 'NORMAL'
     };
 
-    const event = eventFor('/v1/flights/requests', 'POST', payload, buildJwtClaims('AIRLINE', 'ALPHA'));
+    const event = eventFor(
+      '/v1/flights/requests',
+      'POST',
+      payload,
+      buildJwtClaims('AIRLINE', 'ALPHA')
+    );
     const first = await handler(event as never);
     const second = await handler(event as never);
 
@@ -117,7 +122,12 @@ describe('GET /v1/admin/congestion', () => {
     };
 
     const handler = createGetAdminCongestionHandler(deps);
-    const event = eventFor('/v1/admin/congestion', 'GET', undefined, buildJwtClaims('AIRLINE', 'ALPHA'));
+    const event = eventFor(
+      '/v1/admin/congestion',
+      'GET',
+      undefined,
+      buildJwtClaims('AIRLINE', 'ALPHA')
+    );
     event.queryStringParameters = { airport_id: 'SFO' };
 
     const response = await handler(event as never);

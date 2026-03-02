@@ -202,7 +202,11 @@ export class DynamoSlotRepository implements SlotRepository {
     private readonly config: AdapterConfig
   ) {}
 
-  async listAllocations(airportId: string, fromIso: string, toIso: string): Promise<SlotAllocation[]> {
+  async listAllocations(
+    airportId: string,
+    fromIso: string,
+    toIso: string
+  ): Promise<SlotAllocation[]> {
     const response = await this.clients.ddb.send(
       new QueryCommand({
         TableName: this.config.slotsTableName,
@@ -226,14 +230,20 @@ export class DynamoSlotRepository implements SlotRepository {
     });
   }
 
-  async upsertAllocations(airportId: string, allocations: SlotAllocation[], now: string): Promise<void> {
+  async upsertAllocations(
+    airportId: string,
+    allocations: SlotAllocation[],
+    now: string
+  ): Promise<void> {
     void now;
     if (allocations.length === 0) {
       return;
     }
 
     // Deduplicate by flight ID to avoid duplicate keys in a single BatchWrite request.
-    const uniqueAllocations = [...new Map(allocations.map((item) => [item.flightId, item])).values()];
+    const uniqueAllocations = [
+      ...new Map(allocations.map((item) => [item.flightId, item])).values()
+    ];
 
     const requests = uniqueAllocations.map((allocation) => ({
       PutRequest: {

@@ -57,8 +57,7 @@ export class InMemoryFlightRepository implements FlightRepository {
 
   async listActiveFlights(airportId: string): Promise<FlightRequest[]> {
     return [...this.flights.values()].filter(
-      (flight) =>
-        flight.airportId === airportId && !['CANCELLED', 'FAILED'].includes(flight.status)
+      (flight) => flight.airportId === airportId && !['CANCELLED', 'FAILED'].includes(flight.status)
     );
   }
 
@@ -83,7 +82,11 @@ export class InMemoryFlightRepository implements FlightRepository {
 export class InMemorySlotRepository implements SlotRepository {
   private allocations: SlotAllocation[] = [];
 
-  async listAllocations(_airportId: string, fromIso: string, toIso: string): Promise<SlotAllocation[]> {
+  async listAllocations(
+    _airportId: string,
+    fromIso: string,
+    toIso: string
+  ): Promise<SlotAllocation[]> {
     const from = new Date(fromIso);
     const to = new Date(toIso);
     return this.allocations.filter((allocation) => {
@@ -92,10 +95,16 @@ export class InMemorySlotRepository implements SlotRepository {
     });
   }
 
-  async upsertAllocations(_airportId: string, allocations: SlotAllocation[], _now: string): Promise<void> {
+  async upsertAllocations(
+    _airportId: string,
+    allocations: SlotAllocation[],
+    _now: string
+  ): Promise<void> {
     void _airportId;
     void _now;
-    const byFlight = new Map(this.allocations.map((allocation) => [allocation.flightId, allocation]));
+    const byFlight = new Map(
+      this.allocations.map((allocation) => [allocation.flightId, allocation])
+    );
     for (const allocation of allocations) {
       byFlight.set(allocation.flightId, allocation);
     }

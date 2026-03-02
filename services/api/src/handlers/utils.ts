@@ -1,11 +1,7 @@
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { ZodError } from 'zod';
 
-import {
-  NotFoundError,
-  UnauthorizedError,
-  ValidationError
-} from '@skyflow/application';
+import { NotFoundError, UnauthorizedError, ValidationError } from '@skyflow/application';
 import { err, getCorrelationIdFromApiEvent } from '@skyflow/shared';
 
 export function parseJsonBody<T>(event: APIGatewayProxyEventV2): T {

@@ -19,8 +19,7 @@ export function createPostFlightRequestHandler(deps: ApiDependencies) {
     try {
       const auth = getAuthContext(event);
       const payload = submitFlightRequestSchema.parse(parseJsonBody<unknown>(event));
-      const idempotencyKey =
-        event.headers['idempotency-key'] ?? event.headers['Idempotency-Key'];
+      const idempotencyKey = event.headers['idempotency-key'] ?? event.headers['Idempotency-Key'];
       if (!idempotencyKey) {
         throw new ValidationError('Missing required header: Idempotency-Key');
       }
@@ -54,7 +53,10 @@ export function createPostFlightRequestHandler(deps: ApiDependencies) {
         [{ name: 'flight_request_accepted', unit: 'Count', value: 1 }]
       );
 
-      deps.logger.info('Flight request accepted', { correlationId: corrId, requestId: response.requestId });
+      deps.logger.info('Flight request accepted', {
+        correlationId: corrId,
+        requestId: response.requestId
+      });
       return accepted(response);
     } catch (error) {
       deps.logger.error('Flight request rejected', { correlationId: corrId }, { error });

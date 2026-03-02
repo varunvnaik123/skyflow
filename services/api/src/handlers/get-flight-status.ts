@@ -19,7 +19,9 @@ export function createGetFlightStatusHandler(deps: ApiDependencies) {
       const airportId = event.queryStringParameters?.airport_id;
       const flightId = event.pathParameters?.flightId;
       if (!airportId || !flightId) {
-        throw new ValidationError('airport_id query parameter and flightId path parameter are required');
+        throw new ValidationError(
+          'airport_id query parameter and flightId path parameter are required'
+        );
       }
 
       const flight = await deps.flights.getFlight(airportId, flightId);

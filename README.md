@@ -2,6 +2,14 @@
 
 SkyFlow is a distributed, event-driven landing slot allocation system for a single airport that accepts flight slot requests, prioritizes emergency and international arrivals, enforces fairness across airlines, and continuously rebalances assignments on delay events with idempotent APIs, retry-safe queue processing, and production-grade observability/security controls.
 
+## What To Review First
+
+- `packages/domain/src/allocation-engine.ts` for priority/fairness/rebalance logic.
+- `packages/application/src/use-cases/process-workflow-message.ts` for orchestration and dedupe.
+- `services/allocator-worker/src/worker.ts` for SQS partial-batch failure handling.
+- `infra/lib/skyflow-stack.ts` for AWS resource model, IAM, and deployment safety defaults.
+- `docs/operational-playbook.md` for DLQ and incident recovery steps.
+
 ## Architecture Overview
 
 ```mermaid
@@ -66,6 +74,7 @@ skyflow/
       0001-single-airport-v1.md
       0002-sqs-workflow-with-eventbridge-notifications.md
       0003-dynamodb-table-strategy.md
+      0004-stage-aware-safety-defaults.md
   .github/workflows/
     ci.yml
   scripts/localstack/      # LocalStack start/bootstrap/e2e scripts
@@ -74,6 +83,7 @@ skyflow/
 ## Local Setup
 
 Baseline tooling:
+
 - Node.js `20.x` (project includes `.nvmrc`)
 - Docker Desktop (`docker compose`)
 - AWS CLI (`aws`)
@@ -125,6 +135,7 @@ npm run local:e2e
 ```
 
 This command:
+
 - Cleans previous LocalStack state by default (override with `SKYFLOW_LOCAL_E2E_CLEAN=0`)
 - Starts LocalStack (`docker compose`)
 - Bootstraps DynamoDB/SQS/EventBridge resources
@@ -134,6 +145,7 @@ This command:
 ## Deploy to AWS
 
 Prerequisites:
+
 - AWS CLI configured
 - CDK bootstrap completed for target account/region
 - Node.js 20+
@@ -141,11 +153,16 @@ Prerequisites:
 ```bash
 cd infra
 npx cdk bootstrap
+npx cdk deploy --require-approval never --context stage=prod --context allowedOrigins=https://your-ui.example.com
 cd ..
-npm run cdk:deploy
 ```
 
 After deploy, use stack outputs for `ApiEndpoint`, `UserPoolId`, and `UserPoolClientId`.
+
+Notes:
+
+- `stage=prod` sets DynamoDB table removal policy to `RETAIN` (dev defaults to `DESTROY`).
+- `allowedOrigins` configures API CORS; default is `http://localhost:3000` when not set.
 
 ## API and Event Docs
 
@@ -165,3 +182,10 @@ After deploy, use stack outputs for `ApiEndpoint`, `UserPoolId`, and `UserPoolCl
 - CloudWatch EMF custom metrics and DLQ alarm.
 - JWT authorization with AIRLINE vs ADMIN role enforcement.
 - Least-privilege IAM grants in CDK per Lambda responsibility.
+
+## Failure Modes and Recovery
+
+- Worker message failure: failed message ID is returned in `batchItemFailures`, so only that record retries.
+- Repeated failure: SQS redrive policy moves message to DLQ after max receives.
+- DLQ handling: inspect payload + correlation ID in CloudWatch, fix root cause, and replay from DLQ.
+- Event publish failure: retry with backoff is enabled for SQS/EventBridge adapter operations.

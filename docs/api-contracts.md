@@ -3,21 +3,25 @@
 Base path: `/v1`
 
 Machine-readable source of truth:
+
 - `docs/openapi.json` (OpenAPI 3.1)
 - Generated typed client: `packages/sdk/src/generated/client.ts` via `npm run sdk:generate`
 
 Auth:
+
 - JWT required for all endpoints.
 - Roles: `AIRLINE`, `ADMIN`.
 
 ## POST `/flights/requests`
 
 Headers:
+
 - `Authorization: Bearer <jwt>`
 - `Idempotency-Key: <opaque-string>`
 - Optional: `X-Correlation-Id: <uuid>`
 
 Request:
+
 ```json
 {
   "airport_id": "SFO",
@@ -34,6 +38,7 @@ Request:
 ```
 
 Response `202`:
+
 ```json
 {
   "requestId": "uuid",
@@ -44,6 +49,7 @@ Response `202`:
 ## POST `/flights/{flightId}/delay`
 
 Request:
+
 ```json
 {
   "airport_id": "SFO",
@@ -53,6 +59,7 @@ Request:
 ```
 
 Response `202`:
+
 ```json
 {
   "requestId": "uuid",
@@ -63,6 +70,7 @@ Response `202`:
 ## GET `/flights/{flightId}?airport_id=SFO`
 
 Response `200`:
+
 ```json
 {
   "flight_id": "UA123",
@@ -80,6 +88,7 @@ Response `200`:
 ADMIN only.
 
 Request:
+
 ```json
 {
   "airport_id": "SFO",
@@ -93,6 +102,7 @@ Request:
 ```
 
 Response `200`:
+
 ```json
 {
   "status": "UPDATED",
@@ -105,6 +115,7 @@ Response `200`:
 ADMIN only.
 
 Response `200`:
+
 ```json
 {
   "airport_id": "SFO",
@@ -118,6 +129,7 @@ Response `200`:
 ## Error Contract
 
 All failures:
+
 ```json
 {
   "errorCode": "VALIDATION_ERROR",
@@ -127,6 +139,7 @@ All failures:
 ```
 
 Common status codes:
+
 - `400` validation
 - `403` forbidden/role violation
 - `404` not found
